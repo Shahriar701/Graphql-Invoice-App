@@ -1,10 +1,11 @@
 const graphql = require("graphql");
 var _ = require("lodash");
-const User = require("../model/user");
-const Customer = require("../model/customer");
-const InvoiceItems = require("../model/invoiceItem");
-const Invoice = require("../model/invoice");
+const User = require("../model/User");
+const Customer = require("../model/Customer");
+const InvoiceItems = require("../model/InvoiceItem");
+const Invoice = require("../model/Invoice");
 const { calculateTotal } = require("../mapper/calculateTotal");
+const InvoiceItem = require("../model/InvoiceItem");
 
 const {
     GraphQLObjectType,
@@ -15,7 +16,6 @@ const {
     GraphQLList,
     GraphQLNonNull
 } = graphql
-
 
 //Create types
 const UserType = new GraphQLObjectType({
@@ -32,7 +32,7 @@ const UserType = new GraphQLObjectType({
 
 const CustomerType = new GraphQLObjectType({
     name: "Customer",
-    description: "Documentation for cunstomker...",
+    description: "Documentation for Customer...",
     fields: () => ({
         id: { type: GraphQLID },
         name: { type: GraphQLString },
@@ -45,7 +45,6 @@ const CustomerType = new GraphQLObjectType({
             }
         }
     })
-
 });
 
 const InvoiceItemType = new GraphQLObjectType({
@@ -62,24 +61,22 @@ const InvoiceItemType = new GraphQLObjectType({
     })
 });
 
-// {id: "1", timestamp: "2021-08-01T11:00:00+00:00", customerId: "2", userId:"2",
-// invoiceItemsIds:[invoiceItemsId:"2"], invoiceTotal: 70000},
 const InvoiceType = new GraphQLObjectType({
     name: "Invoice",
     description: "invoice description",
     fields: () => ({
         id: { type: GraphQLID },
-        timestamp: {type: GraphQLString},
+        timestamp: { type: GraphQLString },
         user: {
             type: UserType,
             resolve(parent, args) {
-                return User.findById(parent.userId);
+                return User.findById({ userId: parent.id });
             }
         },
         customer: {
             type: CustomerType,
             resolve(parent, args) {
-                return Customer.findById(parent.customerId);
+                return Customer.findById({ customerId: parent.id });
             }
         },
         invoiceItems: {
@@ -89,36 +86,77 @@ const InvoiceType = new GraphQLObjectType({
             }
         },
         invoiceTotal: {
-            type: {type: GraphQLInt},
+            type: GraphQLInt,
             resolve(parent, args) {
-                return calculateTotal(this.invoiceItems);
+                return calculateTotal(invoiceItems)
             }
-        },
+        }
     })
 });
-
-
 
 //RootQuery
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
     description: 'Description',
     fields: {
+        user: {
+            type: UserType,
+            args: { id: { type: GraphQLID } },
+
+            resolve(parent, args) {
+                return User.findById(args.id);
+            }
+        },
+
+        users: {
+            type: UserType,
+            args: { id: { type: GraphQLID } },
+
+            resolve(parent, args) {
+                return User.find({});
+            }
+        },
+
+        customer: {
+            type: CustomerType,
+            args: { id: { type: GraphQLID } },
+
+            resolve(parent, args) {
+                return Customer.findById(args.id);
+            }
+        },
+
+        customers: {
+            type: CustomerType,
+            args: { id: { type: GraphQLID } },
+
+            resolve(parent, args) {
+                return Customer.findById({});
+            }
+        },
+
         invoice: {
             type: InvoiceType,
             args: { id: { type: GraphQLID } },
 
             resolve(parent, args) {
-                return invoice.findById(args.id);
+                return Invoice.findById(args.id);
             }
         },
 
         invoices: {
             type: new GraphQLList(InvoiceType),
             resolve(parent, args) {
-                return invoice.find(
+                return Invoice.find({ id: args.customerId });
+            }
+        },
+
+        invoiceItems: {
+            type: new GraphQLList(InvoiceItemType),
+            resolve(parent, args) {
+                return InvoiceItem.find(
                     {
-                        id: args.customerId
+                        id: args.invoiceId
                     }
                 );
             }
@@ -146,30 +184,27 @@ const Mutation = new GraphQLObjectType({
                 });
                 //save to our db
                 return user.save();
-
             }
-
         },
 
         CreateCustomer: {
             type: CustomerType,
             args: {
                 name: { type: new GraphQLNonNull(GraphQLString) },
-                email: { type: new GraphQLNonNull(GraphQLInt) },
-                address: { type: GraphQLString },
-                userId: { type: GraphQLString }
+                email: { type: new GraphQLNonNull(GraphQLString) },
+                address: { type: new GraphQLNonNull(GraphQLString) },
+                userId: { type: new GraphQLNonNull(GraphQLString) }
             },
 
             resolve(parent, args) {
-                let customer = new User({
+                let customer = new Customer({
+                    name: args.name,
                     email: args.email,
-                    age: args.age,
                     address: args.address,
                     userId: args.userId
                 });
                 //save to our db
-                return user.save();
-
+                return customer.save();
             }
         },
 
@@ -179,41 +214,35 @@ const Mutation = new GraphQLObjectType({
                 product: { type: new GraphQLNonNull(GraphQLString) },
                 amount: { type: new GraphQLNonNull(GraphQLInt) },
                 price: { type: new GraphQLNonNull(GraphQLInt) },
-                total: { type: new GraphQLNonNull(GraphQLInt) },
-                invoiceId: { type: new GraphQLNonNull(GraphQLString) },
-                customerId: { type: new GraphQLNonNull(GraphQLString) }
+                invoiceId: { type: new GraphQLNonNull(GraphQLString) }
             },
             resolve(parent, args) {
-                let invoiceItem = new Hobby({
+
+                let invoiceItem = new InvoiceItem({
                     product: args.product,
                     amount: args.amount,
                     price: args.price,
-                    total: args.price * args.amount,
+                    total: args.amount * args.price,
                     invoiceId: args.invoiceId,
                     customerId: args.customerId
                 });
-
                 return invoiceItem.save();
-
             }
         },
 
         CreateInvoice: {
             type: InvoiceType,
             args: {
-                timestamp: { type: new GraphQLNonNull(GraphQLString) },
                 customerId: { type: new GraphQLNonNull(GraphQLString) },
                 userId: { type: new GraphQLNonNull(GraphQLString) }
             },
             resolve(parent, args) {
-                let invoice = new Hobby({
-                    timestamp: Date.now(),
+                let invoice = new Invoice({
+                    timestamp: new Date().toISOString(),
                     customerId: args.customerId,
                     userId: args.userId,
                 });
-
                 return invoice.save();
-
             }
         },
     },

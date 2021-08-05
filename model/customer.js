@@ -3,7 +3,7 @@ const MSchema = mongoose.Schema;
 
 const customerSchema = new MSchema({
     name: String,
-    email: Number,
+    email: String,
     address: String,
     userId: String
 })

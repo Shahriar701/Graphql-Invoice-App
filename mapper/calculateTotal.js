@@ -3,6 +3,5 @@ function calculateTotal(invoiceItemsIds) {
     var calculateTotal = invoiceItemsIds.forEach(e => {
         return invoiceTotal = invoiceTotal + e.invoiceTotal
     })
-
     return calculateTotal;
 }

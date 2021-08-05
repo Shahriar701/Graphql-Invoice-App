@@ -5,7 +5,7 @@ const MSchema = mongoose.Schema;
 const userSchema = new MSchema({
     name: String,
     age: Number,
-    profession: String
+    department: String
 
 })
 module.exports = mongoose.model('User', userSchema);

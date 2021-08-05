@@ -2,11 +2,9 @@ const mongoose = require('mongoose');
 const MSchema = mongoose.Schema;
 
 
-const invoiceItemSchema = new MSchema({
-    id: String,
+const invoiceSchema = new MSchema({
     timestamp: String,
-    invoiceTotal: Number,
-    user: String,
-    customer: String
+    userId: String,
+    customerId: String
 })
-module.exports = mongoose.model('invoice', invoiceItemSchema);
+module.exports = mongoose.model('Invoice', invoiceSchema);
