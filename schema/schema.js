@@ -4,7 +4,6 @@ const User = require("../model/User");
 const Customer = require("../model/Customer");
 const InvoiceItems = require("../model/InvoiceItem");
 const Invoice = require("../model/Invoice");
-const { calculateTotal } = require("../mapper/calculateTotal");
 const InvoiceItem = require("../model/InvoiceItem");
 const mongoose = require('mongoose');
 
@@ -62,23 +61,6 @@ const InvoiceItemType = new GraphQLObjectType({
     })
 });
 
-// var invoiceItems = {
-//     type: new GraphQLList(InvoiceItemType),
-//     resolve(parent, args) {
-//         return InvoiceItems.find({ invoiceId: parent.id });
-//     }
-// }
-
-var a = {
-    type: new GraphQLList(InvoiceItemType),
-    resolve(parent, args) {
-        var b = InvoiceItems.find({ invoiceId: parent.id });
-        return b;
-    }
-}
-
-// console.log(a.toString());
-
 const InvoiceType = new GraphQLObjectType({
     name: "Invoice",
     description: "invoice description",
@@ -106,8 +88,12 @@ const InvoiceType = new GraphQLObjectType({
         invoiceTotal: {
             type: GraphQLInt,
             resolve(parent, args) {
-                var b = InvoiceItems.find({ invoiceId: parent.id });
-                return calculateTotal(b);
+                return InvoiceItems.find({ invoiceId: parent.id }).exec().then(function (items) {
+                    let grandTotal = items.reduce(function (accumulator, item) {
+                        return accumulator + item.total;
+                    }, 0);
+                    return grandTotal;
+                });
             }
         }
     })
