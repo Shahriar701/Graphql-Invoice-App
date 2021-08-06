@@ -1,7 +1,10 @@
-function calculateTotal(invoiceItemsIds) {
-    var invoiceTotal = 0;
-    var calculateTotal = invoiceItemsIds.forEach(e => {
-        return invoiceTotal = invoiceTotal + e.invoiceTotal
+var calculateTotal = (invoiceItems) => {
+    console.log(invoiceItems);
+    var calculateTotal = invoiceItems.forEach(e => {
+        console.log(invoiceItems);
+        return invoiceTotal = invoiceTotal + e.total
     })
     return calculateTotal;
 }
+
+module.exports = { calculateTotal }

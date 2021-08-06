@@ -6,6 +6,7 @@ const InvoiceItems = require("../model/InvoiceItem");
 const Invoice = require("../model/Invoice");
 const { calculateTotal } = require("../mapper/calculateTotal");
 const InvoiceItem = require("../model/InvoiceItem");
+const mongoose = require('mongoose');
 
 const {
     GraphQLObjectType,
@@ -61,6 +62,23 @@ const InvoiceItemType = new GraphQLObjectType({
     })
 });
 
+// var invoiceItems = {
+//     type: new GraphQLList(InvoiceItemType),
+//     resolve(parent, args) {
+//         return InvoiceItems.find({ invoiceId: parent.id });
+//     }
+// }
+
+var a = {
+    type: new GraphQLList(InvoiceItemType),
+    resolve(parent, args) {
+        var b = InvoiceItems.find({ invoiceId: parent.id });
+        return b;
+    }
+}
+
+// console.log(a.toString());
+
 const InvoiceType = new GraphQLObjectType({
     name: "Invoice",
     description: "invoice description",
@@ -70,13 +88,13 @@ const InvoiceType = new GraphQLObjectType({
         user: {
             type: UserType,
             resolve(parent, args) {
-                return User.findById({ userId: parent.id });
+                return User.findById(parent.userId);
             }
         },
         customer: {
             type: CustomerType,
             resolve(parent, args) {
-                return Customer.findById({ customerId: parent.id });
+                return Customer.findById(parent.customerId);
             }
         },
         invoiceItems: {
@@ -88,7 +106,8 @@ const InvoiceType = new GraphQLObjectType({
         invoiceTotal: {
             type: GraphQLInt,
             resolve(parent, args) {
-                return calculateTotal(invoiceItems)
+                var b = InvoiceItems.find({ invoiceId: parent.id });
+                return calculateTotal(b);
             }
         }
     })
@@ -214,7 +233,8 @@ const Mutation = new GraphQLObjectType({
                 product: { type: new GraphQLNonNull(GraphQLString) },
                 amount: { type: new GraphQLNonNull(GraphQLInt) },
                 price: { type: new GraphQLNonNull(GraphQLInt) },
-                invoiceId: { type: new GraphQLNonNull(GraphQLString) }
+                invoiceId: { type: new GraphQLNonNull(GraphQLString) },
+                customerId: { type: new GraphQLNonNull(GraphQLString) },
             },
             resolve(parent, args) {
 

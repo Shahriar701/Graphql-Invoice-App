@@ -7,6 +7,7 @@ const invoiceItemsSchema = new MSchema({
     price: Number,
     amount: Number,
     total: Number,
-    invoiceId: String
+    invoiceId: String,
+    customerId: String
 })
 module.exports = mongoose.model('InvoiceItems', invoiceItemsSchema);
