@@ -17,7 +17,7 @@ const { createJwtToken } = require("../util/auth")
 
 
 const CreateUser = {
-    type: GraphQLString,
+    type: UserType,
     description: "Register new user",
     args: {
         name: { type: new GraphQLNonNull(GraphQLString) },
@@ -32,7 +32,8 @@ const CreateUser = {
 
         await user.save()
         const token = createJwtToken(user)
-        return token
+        user.token = token
+        return user
     },
 }
 

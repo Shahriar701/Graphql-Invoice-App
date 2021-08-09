@@ -18,7 +18,15 @@ mutation{
 
 # create user sample
 mutation{
-  CreateUser(name:"some name", email:"someemail@email.com", password:"123456", age:15, department:"sells")
+  CreateUser(name:"some name", email:"someemail@email.com", password:"123456", age:15, department:"sells"){
+    id
+    name
+    age
+    email
+    password
+    department
+    token
+  }
 }
 
 # create customer sample
