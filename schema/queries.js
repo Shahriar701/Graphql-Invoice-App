@@ -9,7 +9,7 @@ const user = {
     type: UserType,
     args: { id: { type: GraphQLID } },
 
-    resolve(parent, args) {
+    resolve(parent, args, { verifiedUser }) {
         return User.findById(args.id);
     }
 }

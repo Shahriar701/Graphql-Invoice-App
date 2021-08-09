@@ -1,4 +1,5 @@
-const pwd = "007004200";
+const dotenv = require("dotenv")
+const pwd = process.env.MONGO_PWD || "007004200";
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
 const mongoose = require('mongoose');
@@ -7,7 +8,6 @@ const { authenticate } = require("./middleware/auth")
 const cors = require('cors');
 const port = process.env.PORT || 4000;
 const app = express();
-const dotenv = require("dotenv")
 
 mongoose.connect('mongodb+srv://shahriar:' + pwd + '@gq-ecommerce.at5nh.mongodb.net/gq-ecommerce?retryWrites=true&w=majority',
      { useNewUrlParser: true })
@@ -18,6 +18,8 @@ mongoose.connection.once('open', () => {
 
 app.use(cors());
 dotenv.config();
+
+app.use(authenticate)
 
 app.use('/graphql', graphqlHTTP({
      graphiql: true,

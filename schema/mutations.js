@@ -16,6 +16,25 @@ const {
 const { createJwtToken } = require("../util/auth")
 
 
+const CreateUser = {
+    type: GraphQLString,
+    description: "Register new user",
+    args: {
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        age: { type: new GraphQLNonNull(GraphQLInt) },
+        email: { type: GraphQLNonNull(GraphQLString) },
+        department: { type: GraphQLNonNull(GraphQLString) },
+        password: { type: GraphQLString },
+    },
+    async resolve(parent, args) {
+        const { name, age, email, password, department } = args
+        const user = new User({ name, age, email, password, department })
+
+        await user.save()
+        const token = createJwtToken(user)
+        return token
+    },
+}
 
 const login = {
     type: GraphQLString,
@@ -36,26 +55,6 @@ const login = {
     },
 }
 
-const CreateUser = {
-    type: UserType,
-    description: "Register new user",
-    args: {
-        name: { type: new GraphQLNonNull(GraphQLString) },
-        age: { type: new GraphQLNonNull(GraphQLInt) },
-        email: { type: GraphQLNonNull(GraphQLString) },
-        department: { type: GraphQLNonNull(GraphQLString) },
-        password: { type: GraphQLString },
-    },
-    async resolve(parent, args) {
-        const { name, age, email, password, department } = args
-        const user = new User({ name, age, email, password, department })
-
-        await user.save()
-        const token = createJwtToken(user)
-        return token
-    },
-}
-
 const CreateCustomer = {
     type: CustomerType,
     args: {
@@ -65,7 +64,12 @@ const CreateCustomer = {
         userId: { type: new GraphQLNonNull(GraphQLString) }
     },
 
-    resolve(parent, args) {
+    resolve(parent, args, { verifiedUser }) {
+        console.log("Verified User: ", verifiedUser)
+        if (!verifiedUser) {
+            throw new Error("Unauthorized")
+        }
+
         let customer = new Customer({
             name: args.name,
             email: args.email,
@@ -83,18 +87,19 @@ const CreateInvoiceItem = {
         product: { type: new GraphQLNonNull(GraphQLString) },
         amount: { type: new GraphQLNonNull(GraphQLInt) },
         price: { type: new GraphQLNonNull(GraphQLInt) },
-        invoiceId: { type: new GraphQLNonNull(GraphQLString) },
-        customerId: { type: new GraphQLNonNull(GraphQLString) },
+        invoiceId: { type: new GraphQLNonNull(GraphQLString) }
     },
-    resolve(parent, args) {
+    resolve(parent, args, { verifiedUser }) {
+        if (!verifiedUser) {
+            throw new Error("Unauthenticated")
+        }
 
         let invoiceItem = new InvoiceItem({
             product: args.product,
             amount: args.amount,
             price: args.price,
             total: args.amount * args.price,
-            invoiceId: args.invoiceId,
-            customerId: args.customerId
+            invoiceId: args.invoiceId
         });
         return invoiceItem.save();
     }
@@ -106,7 +111,11 @@ const CreateInvoice = {
         customerId: { type: new GraphQLNonNull(GraphQLString) },
         userId: { type: new GraphQLNonNull(GraphQLString) }
     },
-    resolve(parent, args) {
+    resolve(parent, args, { verifiedUser }) {
+        console.log(verifiedUser)
+        if (!verifiedUser) {
+            throw new Error("Unauthenticated")
+        }
         let invoice = new Invoice({
             timestamp: new Date().toISOString(),
             customerId: args.customerId,
